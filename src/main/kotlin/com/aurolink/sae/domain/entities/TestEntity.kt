@@ -1,7 +1,7 @@
 package com.aurolink.sae.domain.entities
 
-import org.optaplanner.core.api.domain.entity.PlanningEntity
+import ai.timefold.solver.core.api.domain.entity.PlanningEntity
 
-@PlanningEntity
+// @PlanningEntity removed because Timefold requires at least one variable
 class TestEntity {
 }

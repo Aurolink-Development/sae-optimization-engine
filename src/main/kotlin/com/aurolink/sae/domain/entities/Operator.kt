@@ -1,6 +1,6 @@
 package com.aurolink.sae.domain.entities
 
-import org.optaplanner.core.api.domain.lookup.PlanningId
+import ai.timefold.solver.core.api.domain.lookup.PlanningId
 import kotlin.time.Instant
 
 data class Operator (

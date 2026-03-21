@@ -1,10 +1,12 @@
 package com.aurolink.sae.domain.entities
 
-import org.optaplanner.core.api.domain.entity.PlanningEntity
-import org.optaplanner.core.api.domain.variable.PlanningVariable
+import ai.timefold.solver.core.api.domain.entity.PlanningEntity
+import ai.timefold.solver.core.api.domain.lookup.PlanningId
+import ai.timefold.solver.core.api.domain.variable.PlanningVariable
 
 @PlanningEntity
 class PlanningAssignment {
+    @PlanningId
     lateinit var id: String
 
     var bus: Bus? = null
@@ -12,7 +14,7 @@ class PlanningAssignment {
     var moduleId: String? = null
 
     @PlanningVariable(valueRangeProviderRefs = ["operatorRange"])
-    val operator: Operator? = null
+    var operator: Operator? = null
 
     var isPinned: Boolean = false
 

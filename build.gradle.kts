@@ -21,11 +21,13 @@ dependencies {
     implementation("io.quarkus:quarkus-rest")
     testImplementation("io.quarkus:quarkus-junit")
     testImplementation("io.rest-assured:rest-assured")
-    implementation("org.optaplanner:optaplanner-quarkus:8.44.0.Final")
-    implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
+    implementation("ai.timefold.solver:timefold-solver-quarkus:1.32.0")
+    testImplementation("ai.timefold.solver:timefold-solver-test:1.32.0")
+    implementation("io.quarkus:quarkus-smallrye-jwt")
+    implementation("io.quarkus:quarkus-rest-jackson")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
-    implementation("io.quarkus:quarkus-resteasy-reactive")
+    // implementation("io.quarkus:quarkus-resteasy-reactive")
     testImplementation("io.quarkus:quarkus-junit5")
     testImplementation("io.rest-assured:rest-assured")
 }
@@ -34,8 +36,8 @@ group = "com.aurolink.sae"
 version = "1.0.0-SNAPSHOT"
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 allOpen {
@@ -47,7 +49,7 @@ allOpen {
 
 kotlin {
     compilerOptions {
-        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
         javaParameters = true
     }
 }
