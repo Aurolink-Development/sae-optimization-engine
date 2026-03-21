@@ -21,6 +21,13 @@ dependencies {
     implementation("io.quarkus:quarkus-rest")
     testImplementation("io.quarkus:quarkus-junit")
     testImplementation("io.rest-assured:rest-assured")
+    implementation("org.optaplanner:optaplanner-quarkus:8.44.0.Final")
+    implementation("io.quarkus:quarkus-resteasy-reactive-jackson")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+
+    implementation("io.quarkus:quarkus-resteasy-reactive")
+    testImplementation("io.quarkus:quarkus-junit5")
+    testImplementation("io.rest-assured:rest-assured")
 }
 
 group = "com.aurolink.sae"
