@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: ${APP_NAME}
+    namespace: ${K8S_NAMESPACE}
+spec:
+    replicas: ${REPLICAS}
+    selector:
+        matchLabels:
+            app: ${APP_NAME}
+    template:
+        metadata:
+            labels:
+                app: ${APP_NAME}
+        spec:
+            imagePullSecrets:
+                - name: aurolink
+            containers:
+                - name: ${APP_NAME}
+                  image: ${DOCKER_IMAGE}
+                  imagePullPolicy: Always
+                  ports:
+                      - containerPort: ${CONTAINER_PORT}
+                  envFrom:
+                      - secretRef:
+                            name: rabbitmq-secrets
+                      - secretRef:
+                            name: jwt-secrets
+                      - secretRef:
+                            name: mongo-secrets
+                      - secretRef:
+                            name: microservices-secrets
+                      - configMapRef:
+                            name: mongo-config
+                  env:
+                      - name: MICROSERVICES
+                        valueFrom:
+                            configMapKeyRef:
+                                name: microservices-config
+                                key: MICROSERVICES
+                      - name: APP_NAME
+                        value: '${APP_NAME}'
+                      - name: QUARKUS_HTTP_PORT
+                        value: '${CONTAINER_PORT}'
+                  securityContext:
+                      allowPrivilegeEscalation: false
+                      runAsNonRoot: true
+                      runAsUser: 185
+                  livenessProbe:
+                      httpGet:
+                          path: /q/health/live
+                          port: ${CONTAINER_PORT}
+                      initialDelaySeconds: 15
+                      timeoutSeconds: 3
+                      periodSeconds: 10
+                      failureThreshold: 5
+                  readinessProbe:
+                      httpGet:
+                          path: /q/health/ready
+                          port: ${CONTAINER_PORT}
+                      initialDelaySeconds: 20
+                      periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: ${APP_NAME}
+    namespace: ${K8S_NAMESPACE}
+spec:
+    selector:
+        app: ${APP_NAME}
+    ports:
+        - port: 80
+          protocol: TCP
+          targetPort: ${CONTAINER_PORT}

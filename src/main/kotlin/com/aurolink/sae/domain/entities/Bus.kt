@@ -2,14 +2,13 @@ package com.aurolink.sae.domain.entities
 
 import ai.timefold.solver.core.api.domain.lookup.PlanningId
 
-data class Bus (
+data class Bus(
     @PlanningId
     val busId: String,
     val internalNumber: String,
-    val plate: String?,
-    val status: String,
-    val capacitySeated: Int,
-    val fuelLevelPct: Double? = null,
-    val lat: Double? = null,
-    val lon: Double? = null
-)
+    val status: String
+) {
+    override fun toString(): String {
+        return "Bus(id=$busId, internalNumber=$internalNumber)"
+    }
+}

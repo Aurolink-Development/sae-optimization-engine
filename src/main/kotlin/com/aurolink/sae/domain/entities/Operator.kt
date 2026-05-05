@@ -1,14 +1,15 @@
 package com.aurolink.sae.domain.entities
 
 import ai.timefold.solver.core.api.domain.lookup.PlanningId
-import kotlin.time.Instant
 
-data class Operator (
+data class Operator(
     @PlanningId
     val operatorId: String,
     val employeeNumber: String,
-    val firstName: String,
-    val lastName: String,
-    val status: String,
-    val licenseExpiresAt: Instant? = null
-)
+    val homeModuleId: String?,
+    val status: String
+) {
+    override fun toString(): String {
+        return "Operator(id=$operatorId, employeeNumber=$employeeNumber, module=$homeModuleId)"
+    }
+}

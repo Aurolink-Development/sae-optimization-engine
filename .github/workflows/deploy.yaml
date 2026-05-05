@@ -1,0 +1,79 @@
+name: Deploy Quarkus App to DigitalOcean Kubernetes
+
+on:
+    push:
+        branches:
+            - dev
+            - staging
+            - master
+
+jobs:
+    build-and-deploy:
+        runs-on: ubuntu-latest
+
+        environment: ${{ github.ref == 'refs/heads/dev' && 'aurolink_development' || github.ref == 'refs/heads/staging' && 'aurolink_staging' || github.ref == 'refs/heads/master' && 'aurolink_production' }}
+
+        env:
+            DOCR_REGISTRY: registry.digitalocean.com/${{ secrets.DOCR_REPO }}
+            CLUSTER_NAME: ${{ secrets.DO_CLUSTER_NAME }}
+            CONTAINER_PORT: 8080
+            REPLICAS: 1
+            APP_NAME: sae-optimization-engine
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set K8S_NAMESPACE based on branch
+              run: |
+                  if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+                    echo "K8S_NAMESPACE=aurolink-dev" >> $GITHUB_ENV
+                  elif [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
+                    echo "K8S_NAMESPACE=aurolink-staging" >> $GITHUB_ENV
+                  elif [[ "${{ github.ref }}" == "refs/heads/production" ]]; then
+                    echo "K8S_NAMESPACE=aurolink-prod" >> $GITHUB_ENV
+                  fi
+
+            - name: Debug Secrets
+              run: |
+                  if [[ -z "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" ]]; then
+                    echo "ERROR: DIGITALOCEAN_ACCESS_TOKEN is not set"
+                    exit 1
+                  else
+                    echo "DigitalOcean token is set."
+                  fi
+
+            - name: Install doctl
+              uses: digitalocean/action-doctl@v2
+              with:
+                  token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+            - name: Authenticate with DigitalOcean
+              run: |
+                  doctl auth init --access-token ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+                  doctl registry login
+
+            - name: Extract app metadata
+              run: |
+                  export PACKAGE_VERSION=$(grep -oP '^version\s*=\s*"\K[^"]+' build.gradle.kts || echo "1.0.0")
+                  export APP_VERSION=${PACKAGE_VERSION}_${GITHUB_SHA}
+                  echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
+                  echo "DOCKER_IMAGE=$DOCR_REGISTRY/$APP_NAME:$APP_VERSION" >> $GITHUB_ENV
+
+            - name: Build and push Docker image
+              run: |
+                  docker build -t $DOCKER_IMAGE .
+                  docker push $DOCKER_IMAGE
+
+            - name: Set up Kubernetes config
+              run: |
+                  doctl kubernetes cluster kubeconfig save $CLUSTER_NAME
+
+            - name: Generate Kubernetes manifests
+              run: |
+                  mkdir -p k8s-dist
+                  envsubst < k8s/deployment.yaml > k8s-dist/deployment.yaml
+
+            - name: Deploy to DigitalOcean Kubernetes
+              run: |
+                  kubectl apply -f k8s-dist/
