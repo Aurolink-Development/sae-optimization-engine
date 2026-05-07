@@ -17,7 +17,8 @@ class SaeConstraintProvider : ConstraintProvider {
             matchingModuleId(factory),
             minimizeWaitTime(factory),
             unassignedBus(factory),
-            unassignedOperator(factory)
+            unassignedOperator(factory),
+            debugPrint(factory)
         )
     }
 
@@ -103,5 +104,15 @@ class SaeConstraintProvider : ConstraintProvider {
             .filter { it.operator == null }
             .penalize(HardSoftScore.ONE_SOFT)
             .asConstraint("unassignedOperator")
+    }
+
+    fun debugPrint(factory: ConstraintFactory): Constraint {
+        return factory.forEach(ServiceAssignment::class.java)
+            .filter { 
+                println("DEBUG-TIMEFOLD: trip=${it.assignmentId}, start=${it.startDateTime}, end=${it.endDateTime}, bus=${it.bus}")
+                false 
+            }
+            .penalize(HardSoftScore.ONE_HARD)
+            .asConstraint("debugPrint")
     }
 }
