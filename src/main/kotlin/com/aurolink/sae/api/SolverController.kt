@@ -2,7 +2,6 @@ package com.aurolink.sae.api
 
 import com.aurolink.sae.domain.entities.SaeSolution
 import jakarta.inject.Inject
-import io.quarkus.security.Authenticated
 import jakarta.ws.rs.Consumes
 import jakarta.ws.rs.POST
 import jakarta.ws.rs.GET
@@ -17,7 +16,6 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 @Path("/api/solver")
-@Authenticated
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 class SolverController {
