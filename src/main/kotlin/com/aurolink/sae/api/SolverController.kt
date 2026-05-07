@@ -43,6 +43,16 @@ class SolverController {
     fun optimizeAssignments(unsolvedProblem: SaeSolution): Response {
         val problemId = UUID.randomUUID().toString()
 
+        println("DEBUG-CONTROLLER: Received ${unsolvedProblem.assignments.size} assignments.")
+        if (unsolvedProblem.assignments.isNotEmpty()) {
+            try {
+                val first = unsolvedProblem.assignments[0]
+                println("DEBUG-CONTROLLER: First assignment id=${first.assignmentId}, start=${first.startDateTime}, end=${first.endDateTime}, bus=${first.bus?.busId}")
+            } catch (e: Exception) {
+                println("DEBUG-CONTROLLER: Exception reading fields: ${e.message}")
+            }
+        }
+
         // Lanzar optimización asíncrona con listener para capturar la solución final
         solverManager.solve(problemId, unsolvedProblem) { finalSolution ->
             solutionCache[problemId] = finalSolution
