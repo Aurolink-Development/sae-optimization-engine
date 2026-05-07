@@ -15,8 +15,9 @@ class SaeSolution {
     @ValueRangeProvider(id = "operatorRange")
     lateinit var operators: List<Operator>
 
-    // Hechos del problema estáticos, los Buses disponibles
+    // Rango de valores (ValueRange) que las ServiceAssignments usarán como posibles Buses
     @ProblemFactCollectionProperty
+    @ValueRangeProvider(id = "busRange")
     lateinit var buses: List<Bus>
 
     // Lista de entidades a planificar (turnos a asignar a operadores)

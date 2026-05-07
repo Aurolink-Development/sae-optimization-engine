@@ -17,12 +17,12 @@ class ServiceAssignment {
     lateinit var startDateTime: LocalDateTime
     lateinit var endDateTime: LocalDateTime
     
-    // Este campo se asigna asíncronamente en vivo cuando el operador entra al bus
-    // Por lo tanto, no es variable de decisión (sino null o estático en el Solver)
+    // Variable de decisión: a qué bus se le asigna este servicio
+    @PlanningVariable(valueRangeProviderRefs = ["busRange"], allowsUnassigned = true)
     var bus: Bus? = null
 
     // Variable de decisión: a qué operador se le asigna este servicio
-    @PlanningVariable(valueRangeProviderRefs = ["operatorRange"])
+    @PlanningVariable(valueRangeProviderRefs = ["operatorRange"], allowsUnassigned = true)
     var operator: Operator? = null
 
     // Constructor vacío necesario para Timefold
