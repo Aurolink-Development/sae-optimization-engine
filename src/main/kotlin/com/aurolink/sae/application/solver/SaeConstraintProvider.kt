@@ -26,11 +26,14 @@ class SaeConstraintProvider : ConstraintProvider {
      * Hard Constraint 1: Un Operador no puede tener servicios (turnos) con tiempos superpuestos.
      */
     fun operatorConflict(factory: ConstraintFactory): Constraint {
-        return factory.forEachUniquePair(
-            ServiceAssignment::class.java,
-            Joiners.equal(ServiceAssignment::operator),
-            Joiners.overlapping(ServiceAssignment::startDateTime, ServiceAssignment::endDateTime)
-        )
+        return factory.forEachIncludingUnassigned(ServiceAssignment::class.java)
+            .filter { it.operator != null }
+            .join(
+                factory.forEachIncludingUnassigned(ServiceAssignment::class.java).filter { it.operator != null },
+                Joiners.equal(ServiceAssignment::operator),
+                Joiners.overlapping(ServiceAssignment::startDateTime, ServiceAssignment::endDateTime),
+                Joiners.lessThan(ServiceAssignment::assignmentId)
+            )
             .penalize(HardSoftScore.ONE_HARD)
             .asConstraint("operatorConflict")
     }
@@ -39,11 +42,14 @@ class SaeConstraintProvider : ConstraintProvider {
      * Hard Constraint 1.5: Un Autobús no puede tener servicios (turnos) con tiempos superpuestos.
      */
     fun busConflict(factory: ConstraintFactory): Constraint {
-        return factory.forEachUniquePair(
-            ServiceAssignment::class.java,
-            Joiners.equal(ServiceAssignment::bus),
-            Joiners.overlapping(ServiceAssignment::startDateTime, ServiceAssignment::endDateTime)
-        )
+        return factory.forEachIncludingUnassigned(ServiceAssignment::class.java)
+            .filter { it.bus != null }
+            .join(
+                factory.forEachIncludingUnassigned(ServiceAssignment::class.java).filter { it.bus != null },
+                Joiners.equal(ServiceAssignment::bus),
+                Joiners.overlapping(ServiceAssignment::startDateTime, ServiceAssignment::endDateTime),
+                Joiners.lessThan(ServiceAssignment::assignmentId)
+            )
             .penalize(HardSoftScore.ONE_HARD)
             .asConstraint("busConflict")
     }
@@ -52,7 +58,7 @@ class SaeConstraintProvider : ConstraintProvider {
      * Hard Constraint 2: El operador y el servicio deben pertenecer al mismo módulo/patio.
      */
     fun matchingModuleId(factory: ConstraintFactory): Constraint {
-        return factory.forEach(ServiceAssignment::class.java)
+        return factory.forEachIncludingUnassigned(ServiceAssignment::class.java)
             // Filtramos asginaciones cuyo operator ya fue definido pero su homeModuleId no coincide 
             // con el moduleId del servicio asignado.
             .filter { assignment ->
@@ -68,18 +74,15 @@ class SaeConstraintProvider : ConstraintProvider {
      * entre servicios para un mismo conductor.
      */
     fun minimizeWaitTime(factory: ConstraintFactory): Constraint {
-        // Obtenemos un par ordenado de tareas en el tiempo donde assignment1 ocurrió antes de assignment2
-        return factory.forEachUniquePair(
-            ServiceAssignment::class.java,
-            Joiners.equal(ServiceAssignment::operator),
-            Joiners.lessThanOrEqual(ServiceAssignment::endDateTime, ServiceAssignment::startDateTime)
-        )
-            // Penalizamos la puntuación equivalente a los minutos de tiempo muerto 
-            // Esto impulsará a Timefold a encadenar turnos para un modelo compacto de trabajo
-            .penalize(HardSoftScore.ONE_SOFT) { assignment1, assignment2 ->
-                val gapMinutes = ChronoUnit.MINUTES.between(assignment1.endDateTime, assignment2.startDateTime).toInt()
-                // Retornar gapMinutes significa perder N puntos "soft" por cada N minutos inactivos.
-                gapMinutes
+        return factory.forEachIncludingUnassigned(ServiceAssignment::class.java)
+            .filter { it.bus != null }
+            .join(
+                factory.forEachIncludingUnassigned(ServiceAssignment::class.java).filter { it.bus != null },
+                Joiners.equal(ServiceAssignment::bus),
+                Joiners.lessThan(ServiceAssignment::endDateTime, ServiceAssignment::startDateTime)
+            )
+            .penalize(HardSoftScore.ONE_SOFT) { a1, a2 ->
+                ChronoUnit.MINUTES.between(a1.endDateTime, a2.startDateTime).toInt()
             }
             .asConstraint("minimizeWaitTime")
     }
@@ -89,7 +92,7 @@ class SaeConstraintProvider : ConstraintProvider {
      * Esto fuerza al motor a intentar asignar SIEMPRE un autobús si hay disponibles.
      */
     fun unassignedBus(factory: ConstraintFactory): Constraint {
-        return factory.forEach(ServiceAssignment::class.java)
+        return factory.forEachIncludingUnassigned(ServiceAssignment::class.java)
             .filter { it.bus == null }
             .penalize(HardSoftScore.ofHard(10))
             .asConstraint("unassignedBus")
@@ -100,16 +103,16 @@ class SaeConstraintProvider : ConstraintProvider {
      * Si no hay operadores (como ahora), simplemente absorberá los puntos negativos sin abortar.
      */
     fun unassignedOperator(factory: ConstraintFactory): Constraint {
-        return factory.forEach(ServiceAssignment::class.java)
+        return factory.forEachIncludingUnassigned(ServiceAssignment::class.java)
             .filter { it.operator == null }
             .penalize(HardSoftScore.ONE_SOFT)
             .asConstraint("unassignedOperator")
     }
 
     fun debugPrint(factory: ConstraintFactory): Constraint {
-        return factory.forEach(ServiceAssignment::class.java)
+        return factory.forEachIncludingUnassigned(ServiceAssignment::class.java)
             .filter { 
-                println("DEBUG-TIMEFOLD: trip=${it.assignmentId}, start=${it.startDateTime}, end=${it.endDateTime}, bus=${it.bus}")
+                println("DEBUG-TIMEFOLD: trip=${it.assignmentId}, start=${it.startDateTime}, end=${it.endDateTime}, bus=${it.bus}, op=${it.operator}")
                 false 
             }
             .penalize(HardSoftScore.ONE_HARD)
