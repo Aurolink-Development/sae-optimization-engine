@@ -6,6 +6,7 @@ import ai.timefold.solver.core.api.score.stream.ConstraintFactory
 import ai.timefold.solver.core.api.score.stream.ConstraintProvider
 import ai.timefold.solver.core.api.score.stream.Joiners
 import com.aurolink.sae.domain.entities.ServiceAssignment
+import com.aurolink.sae.domain.entities.OptimizationConfig
 import java.time.temporal.ChronoUnit
 
 class SaeConstraintProvider : ConstraintProvider {
@@ -18,6 +19,7 @@ class SaeConstraintProvider : ConstraintProvider {
             minimizeWaitTime(factory),
             unassignedBus(factory),
             unassignedOperator(factory),
+            mandatoryRestTime(factory),
             debugPrint(factory)
         )
     }
@@ -107,6 +109,26 @@ class SaeConstraintProvider : ConstraintProvider {
             .filter { it.operator == null }
             .penalize(HardSoftScore.ONE_SOFT)
             .asConstraint("unassignedOperator")
+    }
+
+    /**
+     * Hard Constraint: Garantiza que un bus tenga al menos N minutos de descanso entre un viaje y el siguiente.
+     */
+    fun mandatoryRestTime(factory: ConstraintFactory): Constraint {
+        return factory.forEachIncludingUnassigned(ServiceAssignment::class.java)
+            .filter { it.bus != null }
+            .join(
+                factory.forEachIncludingUnassigned(ServiceAssignment::class.java).filter { it.bus != null },
+                Joiners.equal(ServiceAssignment::bus),
+                // Trip 1 termina ANTES que Trip 2 inicie
+                Joiners.lessThan(ServiceAssignment::endDateTime, ServiceAssignment::startDateTime)
+            )
+            .join(OptimizationConfig::class.java)
+            .filter { a1, a2, config ->
+                ChronoUnit.MINUTES.between(a1.endDateTime, a2.startDateTime) < config.minRestMinutes
+            }
+            .penalize(HardSoftScore.ONE_HARD)
+            .asConstraint("mandatoryRestTime")
     }
 
     fun debugPrint(factory: ConstraintFactory): Constraint {

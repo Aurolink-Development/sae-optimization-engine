@@ -24,6 +24,10 @@ class SaeSolution {
     @PlanningEntityCollectionProperty
     lateinit var assignments: List<ServiceAssignment>
 
+    // Configuración global de la optimización (ej. tiempo de descanso)
+    @ai.timefold.solver.core.api.domain.solution.ProblemFactProperty
+    var config: OptimizationConfig? = null
+
     // Score final de la solución luego de pasar por los Constraints
     @PlanningScore
     var score: HardSoftScore? = null
@@ -34,10 +38,12 @@ class SaeSolution {
     constructor(
         operators: List<Operator>,
         buses: List<Bus>,
-        assignments: List<ServiceAssignment>
+        assignments: List<ServiceAssignment>,
+        config: OptimizationConfig? = null
     ) {
         this.operators = operators
         this.buses = buses
         this.assignments = assignments
+        this.config = config ?: OptimizationConfig(minRestMinutes = 0)
     }
 }
