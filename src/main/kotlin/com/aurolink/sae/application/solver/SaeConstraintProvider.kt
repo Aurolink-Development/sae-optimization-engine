@@ -13,6 +13,7 @@ class SaeConstraintProvider : ConstraintProvider {
     override fun defineConstraints(factory: ConstraintFactory): Array<Constraint> {
         return arrayOf(
             operatorConflict(factory),
+            busConflict(factory),
             matchingModuleId(factory),
             minimizeWaitTime(factory)
         )
@@ -29,6 +30,19 @@ class SaeConstraintProvider : ConstraintProvider {
         )
             .penalize(HardSoftScore.ONE_HARD)
             .asConstraint("operatorConflict")
+    }
+
+    /**
+     * Hard Constraint 1.5: Un Autobús no puede tener servicios (turnos) con tiempos superpuestos.
+     */
+    fun busConflict(factory: ConstraintFactory): Constraint {
+        return factory.forEachUniquePair(
+            ServiceAssignment::class.java,
+            Joiners.equal(ServiceAssignment::bus),
+            Joiners.overlapping(ServiceAssignment::startDateTime, ServiceAssignment::endDateTime)
+        )
+            .penalize(HardSoftScore.ONE_HARD)
+            .asConstraint("busConflict")
     }
 
     /**
