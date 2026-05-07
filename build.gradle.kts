@@ -24,6 +24,7 @@ dependencies {
     implementation("ai.timefold.solver:timefold-solver-quarkus:1.32.0")
     testImplementation("ai.timefold.solver:timefold-solver-test:1.32.0")
     implementation("io.quarkus:quarkus-smallrye-jwt")
+    implementation("io.quarkus:quarkus-smallrye-health")
     implementation("io.quarkus:quarkus-rest-jackson")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
